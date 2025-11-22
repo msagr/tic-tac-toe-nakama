@@ -2,11 +2,14 @@
 
 import client from "../../lib/nakamajs"
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const router = useRouter()
   
   async function registerUser(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -19,6 +22,7 @@ export default function RegisterPage() {
             username
         )
         console.log('Successfully created: ', session)
+        router.push('/mode-select')
     } catch (err) {
         console.error('Error creating user: ', err)
     }

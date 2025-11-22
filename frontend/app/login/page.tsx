@@ -2,10 +2,13 @@
 
 import { useState, type FormEvent } from "react";
 import client from "../../lib/nakamajs";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  const router = useRouter()
 
   async function handleLogin(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -19,6 +22,7 @@ export default function LoginPage() {
             username
         )
         console.log('Successful login: ', session)
+        router.push('/mode-select')
     } catch (err) {
         console.error('Error loggingin user: ', err)
     }
