@@ -1,0 +1,288 @@
+/* components/tic/TicTacToe.module.css */
+
+/* Design tokens */
+:root {
+  --ttt-bg-surface: rgba(15, 23, 42, 0.96);
+  --ttt-bg-board: linear-gradient(180deg, #020617, #020617 50%, #020617 100%);
+  --ttt-bg-square: radial-gradient(circle at 10% 0, #1f2937, #020617 55%);
+  --ttt-border-subtle: rgba(148, 163, 184, 0.45);
+  --ttt-border-strong: rgba(148, 163, 184, 0.7);
+  --ttt-accent-start: #7c3aed;
+  --ttt-accent-end: #22d3ee;
+  --ttt-text-primary: #e5e7eb;
+  --ttt-text-muted: #9ca3af;
+  --ttt-text-strong: #f9fafb;
+  --ttt-radius-lg: 18px;
+  --ttt-radius-md: 12px;
+  --ttt-radius-sm: 8px;
+  --ttt-shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.9);
+  --ttt-shadow-strong: 0 28px 80px rgba(15, 23, 42, 1);
+  --ttt-transition-fast: 0.12s ease-out;
+}
+
+/* Main game container around the board & history */
+.game {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 18px 18px 20px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(124, 58, 237, 0.25), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(34, 211, 238, 0.22), transparent 55%),
+    var(--ttt-bg-surface);
+  border: 1px solid rgba(15, 23, 42, 1);
+  box-shadow:
+    var(--ttt-shadow-soft),
+    0 0 0 1px rgba(15, 23, 42, 0.8);
+  overflow: hidden;
+}
+
+/* Glow layer inside card */
+.game::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background:
+    radial-gradient(circle at top, rgba(56, 189, 248, 0.22), transparent 55%),
+    radial-gradient(circle at bottom, rgba(129, 140, 248, 0.2), transparent 55%);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.gameBoard,
+.gameInfo {
+  position: relative;
+  z-index: 1;
+}
+
+/* Board wrapper */
+.gameBoard {
+  background: var(--ttt-bg-board);
+  padding: 16px 14px 18px;
+  border-radius: var(--ttt-radius-lg);
+  border: 1px solid var(--ttt-border-subtle);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.9);
+}
+
+/* History column */
+.gameInfo {
+  margin-top: 6px;
+  padding: 12px 10px 10px;
+  border-radius: var(--ttt-radius-md);
+  background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.94));
+  border: 1px solid rgba(30, 64, 175, 0.7);
+}
+
+/* Board rows */
+.boardRow {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+/* Last row spacing fix */
+.boardRow:last-of-type {
+  margin-bottom: 0;
+}
+
+/* Individual squares */
+.square {
+  width: 86px;
+  height: 86px;
+  background: var(--ttt-bg-square);
+  border-radius: 20px;
+  border: 1px solid var(--ttt-border-subtle);
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: var(--ttt-text-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform var(--ttt-transition-fast),
+    box-shadow var(--ttt-transition-fast),
+    border-color var(--ttt-transition-fast),
+    background var(--ttt-transition-fast),
+    color var(--ttt-transition-fast);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.9);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle inner glow */
+.square::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 30% 0, rgba(148, 163, 184, 0.18), transparent 60%),
+    radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.9), transparent 65%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* Hover & focus states */
+.square:hover:not(:disabled) {
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.95);
+  border-color: rgba(129, 140, 248, 0.8);
+}
+
+.square:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 1),
+    0 0 0 2px rgba(56, 189, 248, 0.9),
+    0 18px 40px rgba(15, 23, 42, 0.95);
+}
+
+/* Disabled (after played) */
+.square:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.85);
+}
+
+/* Status text above board */
+.status {
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-align: center;
+  color: #c7d2fe;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+/* Moves list */
+.historyList {
+  padding-left: 0;
+  margin-top: 8px;
+  list-style: none;
+  max-height: 210px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.9) transparent;
+}
+
+.historyList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.historyList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.historyList::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.8);
+  border-radius: 999px;
+}
+
+/* History buttons (timeline) */
+.historyButton {
+  width: 100%;
+  text-align: left;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(51, 65, 85, 0.9);
+  padding: 8px 11px;
+  border-radius: var(--ttt-radius-sm);
+  color: var(--ttt-text-primary);
+  cursor: pointer;
+  margin-bottom: 6px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition:
+    background var(--ttt-transition-fast),
+    border-color var(--ttt-transition-fast),
+    transform var(--ttt-transition-fast),
+    box-shadow var(--ttt-transition-fast),
+    color var(--ttt-transition-fast);
+}
+
+.historyButton::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.8);
+}
+
+/* Hover / focus */
+.historyButton:hover {
+  background: rgba(15, 23, 42, 1);
+  border-color: rgba(148, 163, 184, 0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.9);
+}
+
+.historyButton:focus-visible {
+  outline: 2px solid rgba(56, 189, 248, 0.9);
+  outline-offset: 1px;
+}
+
+/* Active move in history */
+.historyButton[aria-current="true"] {
+  background: linear-gradient(90deg, var(--ttt-accent-start), var(--ttt-accent-end));
+  color: #020617;
+  border: none;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.95);
+}
+
+.historyButton[aria-current="true"]::before {
+  background: #020617;
+}
+
+/* Winner banner */
+.resultBanner {
+  margin-top: 12px;
+  padding: 9px 13px;
+  border-radius: 999px;
+  background: radial-gradient(circle at top left, var(--ttt-accent-start), var(--ttt-accent-end));
+  color: #020617;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Small glowing dot in banner */
+.resultBanner::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #020617;
+}
+
+/* Responsive tweaks */
+@media (max-width: 640px) {
+  .game {
+    padding: 16px 14px 18px;
+    max-width: 100%;
+  }
+
+  .square {
+    width: 72px;
+    height: 72px;
+    font-size: 1.8rem;
+  }
+
+  .historyList {
+    max-height: 180px;
+  }
+}
