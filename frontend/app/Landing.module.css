@@ -1,0 +1,318 @@
+.page {
+  position: relative;
+  min-height: 100vh;
+  padding: 32px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  background:
+    radial-gradient(circle at top left, #1d4ed8 0, transparent 55%),
+    radial-gradient(circle at bottom right, #0ea5e9 0, transparent 55%),
+    #020617;
+  color: #e5e7eb;
+  overflow: hidden;
+}
+
+/* subtle noise overlay */
+.noise {
+  pointer-events: none;
+  position: fixed;
+  inset: -40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='noStitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.18'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+}
+
+.shell {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1120px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.1fr);
+  gap: 40px;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+}
+
+.hero {
+  max-width: 540px;
+}
+
+.brandBadge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #e5e7eb;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(16px);
+}
+
+.title {
+  margin-top: 16px;
+  font-size: clamp(32px, 4vw, 40px);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: #f9fafb;
+}
+
+.highlight {
+  background: linear-gradient(90deg, #a855f7, #22d3ee);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.subtitle {
+  margin-top: 12px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #9ca3af;
+}
+
+.ctaRow {
+  margin-top: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.primaryCta,
+.secondaryCta,
+.playCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    transform 0.12s ease-out,
+    box-shadow 0.12s ease-out,
+    background 0.12s ease-out,
+    border-color 0.12s ease-out,
+    color 0.12s ease-out;
+}
+
+.primaryCta {
+  background: linear-gradient(90deg, #7c3aed, #22d3ee);
+  color: #020617;
+  border: none;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.9);
+}
+
+.primaryCta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 1);
+}
+
+.secondaryCta {
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: rgba(15, 23, 42, 0.8);
+  color: #e5e7eb;
+}
+
+.secondaryCta:hover {
+  border-color: rgba(148, 163, 184, 1);
+  background: rgba(15, 23, 42, 0.95);
+  transform: translateY(-2px);
+}
+
+.metaRow {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.metaItem {
+  flex: 0 1 150px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: radial-gradient(circle at top left, rgba(129, 140, 248, 0.22), transparent 60%),
+    rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.metaLabel {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #9ca3af;
+  margin-bottom: 1px;
+}
+
+.metaValue {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+/* Right side: game preview card */
+.previewSection {
+  display: flex;
+  justify-content: center;
+}
+
+.previewCard {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  padding: 18px 18px 20px;
+  border-radius: 22px;
+  background: radial-gradient(circle at top, rgba(148, 163, 184, 0.08), transparent 68%),
+    rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  box-shadow:
+    0 30px 80px rgba(15, 23, 42, 0.9),
+    0 0 0 1px rgba(15, 23, 42, 0.7);
+  overflow: hidden;
+}
+
+.previewGlow {
+  position: absolute;
+  inset: -40%;
+  background:
+    radial-gradient(circle at top, rgba(56, 189, 248, 0.26), transparent 60%),
+    radial-gradient(circle at bottom, rgba(129, 140, 248, 0.24), transparent 60%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.previewHeader {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 12px;
+}
+
+.previewTag {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #cbd5f5;
+}
+
+.previewTitle {
+  margin-top: 8px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.previewSubtitle {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.previewBody {
+  position: relative;
+  z-index: 1;
+  margin-top: 10px;
+}
+
+/* mini-board skeleton */
+.boardSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 16px;
+  background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.98));
+  border: 1px solid rgba(55, 65, 81, 0.9);
+}
+
+.boardRow {
+  display: flex;
+  gap: 8px;
+}
+
+.cell {
+  flex: 1;
+  height: 60px;
+  border-radius: 14px;
+  background: radial-gradient(circle at 10% 0, #111827, #020617 55%);
+  border: 1px solid rgba(55, 65, 81, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: #e5e7eb;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.9);
+}
+
+.cellX {
+  color: #a855f7;
+}
+
+.cellO {
+  color: #22d3ee;
+}
+
+.previewFooter {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.playCta {
+  background: linear-gradient(90deg, #22c55e, #22d3ee);
+  color: #020617;
+  border: none;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.95);
+}
+
+.playCta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 55px rgba(15, 23, 42, 1);
+}
+
+.previewHint {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.inlineLink {
+  color: #e5e7eb;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.inlineLink:hover {
+  color: #f9fafb;
+}
+
+/* Responsive tweaks */
+@media (max-width: 640px) {
+  .page {
+    padding: 24px 16px;
+  }
+
+  .previewCard {
+    max-width: 100%;
+  }
+
+  .boardSkeleton .cell {
+    height: 52px;
+  }
+}
