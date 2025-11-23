@@ -1,13 +1,15 @@
 "use client"
 
-import client from "../../lib/nakamajs"
+import { client } from "../../lib/nakamajs"
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/lib/hook/UserContext";
 
 export default function RegisterPage() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const {user, setUser, logout} = useUser();
 
   const router = useRouter()
   
@@ -22,6 +24,7 @@ export default function RegisterPage() {
             username
         )
         console.log('Successfully created: ', session)
+        setUser(session)
         router.push('/mode-select')
     } catch (err) {
         console.error('Error creating user: ', err)

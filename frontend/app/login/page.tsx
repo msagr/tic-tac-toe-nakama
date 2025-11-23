@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import client from "../../lib/nakamajs";
+import { client } from "../../lib/nakamajs";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/lib/hook/UserContext";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const {user, setUser, logout} = useUser();
 
   const router = useRouter()
 
@@ -22,6 +24,7 @@ export default function LoginPage() {
             username
         )
         console.log('Successful login: ', session)
+        setUser(session)
         router.push('/mode-select')
     } catch (err) {
         console.error('Error loggingin user: ', err)

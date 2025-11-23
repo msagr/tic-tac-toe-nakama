@@ -26,7 +26,7 @@ const ROOM_OPTIONS: RoomOption[] = [
   },
   {
     id: "secondary",
-    title: "Secondary room",
+    title: "Public room",
     badge: "Open lobby",
     tagline: "Great for casual or backup games.",
     description:
@@ -57,7 +57,7 @@ function RoomCard({ option }: { option: RoomOption }) {
 
       <div className={styles.modeFooter}>
         <span className={styles.modeCtaLabel}>
-          Create {option.id === "private" ? "private" : "secondary"} room
+          Create {option.id === "private" ? "private" : "public"} room
         </span>
         <span className={styles.modeArrow}>→</span>
       </div>

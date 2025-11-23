@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "../app/Landing.module.css";
+import { useUser } from "@/lib/hook/UserContext";
 
 type NavLink = {
   href: string;
@@ -16,8 +17,19 @@ const links: NavLink[] = [
   { href: "/tictactoe", label: "Vs Computer" },
 ];
 
+function NavUserAvatar({ username }: { username: string }) {
+  const initial = username.trim().charAt(0).toUpperCase() || "?";
+
+  return (
+    <div className={styles.navUserAvatar} aria-label={username} title={username}>
+      <span className={styles.navUserAvatarInitial}>{initial}</span>
+    </div>
+  );
+}
+
 export function NavBar() {
   const pathname = usePathname();
+  const { user } = useUser();
 
   return (
     <header className={styles.navRoot}>
@@ -48,12 +60,18 @@ export function NavBar() {
         </nav>
 
         <div className={styles.navAuth}>
-          <Link href="/login" className={styles.navAuthLink}>
-            Log in
-          </Link>
-          <Link href="/register" className={styles.navAuthPrimary}>
-            Sign up
-          </Link>
+           {!user ? (
+            <>
+                <Link href="/login" className={styles.navAuthLink}>
+                    Log in
+                </Link>
+                <Link href="/register" className={styles.navAuthPrimary}>
+                    Sign up
+                </Link>
+            </>
+            ) : (
+                <NavUserAvatar username={user.username as string} />
+            )}
         </div>
       </div>
     </header>

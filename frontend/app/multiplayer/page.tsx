@@ -1,28 +1,127 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import styles from "../Landing.module.css";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { client, getSocket, createSocketOnly, addToMatchmaker } from "@/lib/nakamajs";
+import { useUser } from "@/lib/hook/UserContext";
+import { Session } from "@heroiclabs/nakama-js";
+import React from "react";
 
 export default function MultiplayerPage() {
   const [createRoomName, setCreateRoomName] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  const { user, setUser, logout } = useUser();
+  const handlerRef = useRef<((m: any) => void) | null>(null);
 
-  const router = useRouter();
-
-  function handleCreateRoom(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    console.log("Create room:", { name: createRoomName });
-    router.push('/create-room')
-    // TODO: call Nakama RPC / match create here
+  function handleCreateRoom() {
+    console.log('Create Room');
   }
 
-  function handleJoinRoom(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    console.log("Join room with code:", { code: joinCode });
-    // TODO: call Nakama RPC / match join here
+  // small retry helper for joinMatch - avoids tiny race windows
+  async function tryJoin(socket: any, id: string, attempts = 3) {
+    for (let i = 0; i < attempts; i++) {
+      try {
+        await socket.joinMatch(id);
+        return true;
+      } catch (err: any) {
+        const msg = String(err?.message ?? JSON.stringify(err)).toLowerCase();
+        // If server explicitly says invalid match id, do not retry
+        if (msg.includes("invalid match id") || msg.includes("invalid match")) {
+          throw err;
+        }
+        // backoff and retry
+        await new Promise((r) => setTimeout(r, 150 * (i + 1)));
+      }
+    }
+    throw new Error("joinMatch failed after retries");
   }
+
+  async function handleJoinRoom(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    console.log("Preparing matchmaking...");
+
+    if (!user) {
+      console.log("Please login first.");
+      return;
+    }
+
+    try {
+      // 1) ensure socket is connected (singleton getSocket)
+      const socket = await getSocket(user as Session, true);
+
+      // 2) attach handler BEFORE calling addToMatchmaker to avoid race
+      const handler = async (matched: any) => {
+        console.log("MatchmakerMatched payload:", matched);
+        // authoritative flow: prefer match_id
+        const matchId = matched.match_id;
+        if (!matchId) {
+          console.warn("No match_id in result (authoritative flow expected).", matched);
+          console.log("Match found but no match_id returned.");
+          return;
+        }
+
+        console.log("Match found — joining...");
+
+        try {
+          await tryJoin(socket, matchId);
+          console.log("Joined match: " + matchId);
+
+          // attach match handlers now that we're joined
+          socket.onmatchdata = (md: any) => {
+            // handle incoming match state updates
+            console.log("onmatchdata", md);
+          };
+          socket.onmatchpresence = (p: any) => {
+            console.log("onmatchpresence", p);
+          };
+
+          // TODO: navigate to your in-game UI here
+
+        } catch (joinErr) {
+          console.error("Failed to join authoritative match:", joinErr);
+          console.log("Failed to join match: " + String(joinErr));
+        } finally {
+          // remove this handler to avoid reacting to further matchmaker events
+          try {
+            if ((socket as any).onmatchmakermatched === handler) {
+              (socket as any).onmatchmakermatched = undefined;
+            }
+          } catch {}
+        }
+      };
+
+      // store ref so we can remove on unmount if needed
+      handlerRef.current = handler;
+      socket.onmatchmakermatched = handler;
+
+      // 3) now add to matchmaker (this returns a ticket immediately)
+      const ticket = await addToMatchmaker(user as Session, "*", 2, 2);
+      console.log("submitted to matchmaker, ticket:", ticket);
+      console.log("Searching for opponent... (ticket: " + (ticket?.ticket ?? "n/a") + ")");
+
+      // waiting for onmatchmakermatched to fire...
+    } catch (err) {
+      console.error("Error starting matchmaking:", err);
+      console.log("Matchmaking error: " + String(err));
+    }
+  }
+
+  // cleanup: remove handler if component unmounts
+  React.useEffect(() => {
+    return () => {
+      (async () => {
+        try {
+          if (!user) return;
+          const socket = await getSocket(user, true);
+          if (handlerRef.current && (socket as any).onmatchmakermatched === handlerRef.current) {
+            (socket as any).onmatchmakermatched = undefined;
+          }
+        } catch { /* ignore */ }
+      })();
+    };
+  }, [user]);
 
   return (
     <div className={styles.page}>

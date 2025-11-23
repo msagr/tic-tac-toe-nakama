@@ -538,3 +538,22 @@
 .navAuthPrimary:hover {
   box-shadow: 0 16px 40px rgba(15, 23, 42, 1);
 }
+
+.navUserAvatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: radial-gradient(circle at top left, #1f2937, #020617 60%);
+  border: 1px solid rgba(148, 163, 184, 0.9);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.9);
+}
+
+.navUserAvatarInitial {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e5e7eb;
+}
+
