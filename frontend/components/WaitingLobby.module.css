@@ -1,0 +1,131 @@
+.wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top, #1f2937, #020617);
+  color: #e5e7eb;
+}
+
+.card {
+  width: 100%;
+  max-width: 640px;
+  padding: 2.5rem 2rem;
+  border-radius: 1.5rem;
+  background: linear-gradient(135deg, rgba(15,23,42,0.9), rgba(3,7,18,0.95));
+  box-shadow: 0 25px 60px rgba(0,0,0,0.7);
+  border: 1px solid rgba(148,163,184,0.25);
+  backdrop-filter: blur(16px);
+}
+
+.title {
+  font-size: 1.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.35rem;
+}
+
+.subtitle {
+  color: #9ca3af;
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
+}
+
+.frames {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.playerFrame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.avatar,
+.avatarMuted {
+  width: 80px;
+  height: 80px;
+  border-radius: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.avatar {
+  background: radial-gradient(circle at 20% 0%, #22c55e, #16a34a);
+  color: #ecfdf3;
+  box-shadow: 0 15px 30px rgba(34,197,94,0.4);
+}
+
+.avatarMuted {
+  background: radial-gradient(circle at 20% 0%, #111827, #020617);
+  color: #4b5563;
+  border: 1px dashed rgba(75,85,99,0.8);
+}
+
+.label {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.tagYou {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #22c55e;
+}
+
+.pulse {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  animation: pulseText 1.6s ease-in-out infinite;
+}
+
+.vs {
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.loadingDots {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.3rem;
+  font-size: 1.4rem;
+  color: #9ca3af;
+}
+
+.loadingDots span {
+  animation: bounce 1.3s infinite;
+}
+
+.loadingDots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.loadingDots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-4px); opacity: 1; }
+}
+
+@keyframes pulseText {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.status {
+  margin-top: 1.5rem;      /* optional spacing above */
+  text-align: center;      /* centers the text horizontally */
+}

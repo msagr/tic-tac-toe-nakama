@@ -1,45 +1,28 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
-import styles from "../Landing.module.css";
+import React, { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { client, getSocket, createSocketOnly, addToMatchmaker } from "@/lib/nakamajs";
+import styles from "../Landing.module.css";
+import { addToMatchmaker } from "@/lib/nakamajs";
 import { useUser } from "@/lib/hook/UserContext";
-import { Session } from "@heroiclabs/nakama-js";
-import React from "react";
+import type { Session } from "@heroiclabs/nakama-js";
 
 export default function MultiplayerPage() {
-  const [createRoomName, setCreateRoomName] = useState("");
-  const [joinCode, setJoinCode] = useState("");
-  const { user, setUser, logout } = useUser();
-  const handlerRef = useRef<((m: any) => void) | null>(null);
+  const [createRoomName, setCreateRoomName] = useState<string>("");
+  const [joinCode, setJoinCode] = useState<string>("");
+  const { user } = useUser();
+  const router = useRouter();
 
-  function handleCreateRoom() {
-    console.log('Create Room');
+  function handleCreateRoom(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+    // Later you can implement private-room style logic here.
+    // For now just log.
+    console.log("Create Room clicked with name:", createRoomName);
   }
 
-  // small retry helper for joinMatch - avoids tiny race windows
-  async function tryJoin(socket: any, id: string, attempts = 3) {
-    for (let i = 0; i < attempts; i++) {
-      try {
-        await socket.joinMatch(id);
-        return true;
-      } catch (err: any) {
-        const msg = String(err?.message ?? JSON.stringify(err)).toLowerCase();
-        // If server explicitly says invalid match id, do not retry
-        if (msg.includes("invalid match id") || msg.includes("invalid match")) {
-          throw err;
-        }
-        // backoff and retry
-        await new Promise((r) => setTimeout(r, 150 * (i + 1)));
-      }
-    }
-    throw new Error("joinMatch failed after retries");
-  }
-
-  async function handleJoinRoom(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleJoinRoom(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
     console.log("Preparing matchmaking...");
 
     if (!user) {
@@ -48,80 +31,18 @@ export default function MultiplayerPage() {
     }
 
     try {
-      // 1) ensure socket is connected (singleton getSocket)
-      const socket = await getSocket(user as Session, true);
-
-      // 2) attach handler BEFORE calling addToMatchmaker to avoid race
-      const handler = async (matched: any) => {
-        console.log("MatchmakerMatched payload:", matched);
-        // authoritative flow: prefer match_id
-        const matchId = matched.match_id;
-        if (!matchId) {
-          console.warn("No match_id in result (authoritative flow expected).", matched);
-          console.log("Match found but no match_id returned.");
-          return;
-        }
-
-        console.log("Match found — joining...");
-
-        try {
-          await tryJoin(socket, matchId);
-          console.log("Joined match: " + matchId);
-
-          // attach match handlers now that we're joined
-          socket.onmatchdata = (md: any) => {
-            // handle incoming match state updates
-            console.log("onmatchdata", md);
-          };
-          socket.onmatchpresence = (p: any) => {
-            console.log("onmatchpresence", p);
-          };
-
-          // TODO: navigate to your in-game UI here
-
-        } catch (joinErr) {
-          console.error("Failed to join authoritative match:", joinErr);
-          console.log("Failed to join match: " + String(joinErr));
-        } finally {
-          // remove this handler to avoid reacting to further matchmaker events
-          try {
-            if ((socket as any).onmatchmakermatched === handler) {
-              (socket as any).onmatchmakermatched = undefined;
-            }
-          } catch {}
-        }
-      };
-
-      // store ref so we can remove on unmount if needed
-      handlerRef.current = handler;
-      socket.onmatchmakermatched = handler;
-
-      // 3) now add to matchmaker (this returns a ticket immediately)
+      // 1) Add this user to the matchmaker queue
       const ticket = await addToMatchmaker(user as Session, "*", 2, 2);
-      console.log("submitted to matchmaker, ticket:", ticket);
-      console.log("Searching for opponent... (ticket: " + (ticket?.ticket ?? "n/a") + ")");
+      console.log("Submitted to matchmaker, ticket:", ticket);
 
-      // waiting for onmatchmakermatched to fire...
-    } catch (err) {
-      console.error("Error starting matchmaking:", err);
-      console.log("Matchmaking error: " + String(err));
+      // 2) Navigate to waiting room.
+      // The waiting room page will attach the Nakama handlers and listen for matches.
+      router.push("/multiplayer/waiting");
+    } catch (error) {
+      console.error("Error starting matchmaking:", error);
+      console.log(`Matchmaking error: ${String(error)}`);
     }
   }
-
-  // cleanup: remove handler if component unmounts
-  React.useEffect(() => {
-    return () => {
-      (async () => {
-        try {
-          if (!user) return;
-          const socket = await getSocket(user, true);
-          if (handlerRef.current && (socket as any).onmatchmakermatched === handlerRef.current) {
-            (socket as any).onmatchmakermatched = undefined;
-          }
-        } catch { /* ignore */ }
-      })();
-    };
-  }, [user]);
 
   return (
     <div className={styles.page}>
@@ -129,20 +50,20 @@ export default function MultiplayerPage() {
 
       <main className={styles.shell}>
         <section className={styles.hero}>
-            <div className={styles.brandBadge}>XOXO Multiplayer</div>
-            <h1 className={styles.title}>
-                Set up your <span className={styles.highlight}>multiplayer</span> match.
-            </h1>
-            <p className={styles.subtitle}>
-                Create a new room and share the code with a friend, or join an
-                existing match using their invite.
-            </p>
+          <div className={styles.brandBadge}>XOXO Multiplayer</div>
+          <h1 className={styles.title}>
+            Set up your <span className={styles.highlight}>multiplayer</span> match.
+          </h1>
+          <p className={styles.subtitle}>
+            Create a new room and share the code with a friend, or join an existing
+            match using their invite.
+          </p>
 
-            <div style={{ marginTop: 18 }}>
-                <Link href="/mode-select" className={styles.secondaryCta}>
-                ← Back to mode selection
-                </Link>
-            </div>
+          <div style={{ marginTop: 18 }}>
+            <Link href="/mode-select" className={styles.secondaryCta}>
+              ← Back to mode selection
+            </Link>
+          </div>
         </section>
 
         <section className={styles.previewSection}>
@@ -162,17 +83,14 @@ export default function MultiplayerPage() {
                   Customize your room name so your friend knows they’re in the right lobby.
                 </p>
 
-                <form
-                  onSubmit={handleCreateRoom}
-                  className={styles.formColumn}
-                >
+                <form onSubmit={handleCreateRoom} className={styles.formColumn}>
                   <input
                     id="room-name"
                     name="room-name"
                     type="text"
                     required
                     value={createRoomName}
-                    onChange={(e) => setCreateRoomName(e.target.value)}
+                    onChange={(event) => setCreateRoomName(event.target.value)}
                     className={styles.textInput}
                     disabled
                   />
@@ -199,17 +117,14 @@ export default function MultiplayerPage() {
                   Room codes are short and shareable. Paste it below and we’ll connect you.
                 </p>
 
-                <form
-                  onSubmit={handleJoinRoom}
-                  className={styles.formColumn}
-                >
+                <form onSubmit={handleJoinRoom} className={styles.formColumn}>
                   <input
                     id="room-code"
                     name="room-code"
                     type="text"
                     required
                     value={joinCode}
-                    onChange={(e) => setJoinCode(e.target.value)}
+                    onChange={(event) => setJoinCode(event.target.value)}
                     className={styles.textInput}
                     disabled
                   />
