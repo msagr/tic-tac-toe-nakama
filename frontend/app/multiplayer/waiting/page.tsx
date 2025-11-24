@@ -118,7 +118,7 @@ export default function WaitingPage() {
       cancelled = true;
       if (localSocket) {
         // Clean up handler when leaving waiting room
-        localSocket.onmatchmakermatched = undefined;
+        localSocket.onmatchmakermatched = () => {};
       }
     };
   }, [user]);

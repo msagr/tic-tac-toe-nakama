@@ -110,19 +110,25 @@ export async function addToMatchmaker(
   return ticket; // { ticket: string }
 }
 
+type MatchmakingSocket = Socket & {
+  onmatchmakermatched?: (matched: MatchmakerMatched) => void;
+};
+
 export function subscribeMatchmakerMatched(
   socket: Socket,
-  handler: (matched: MatchmakerMatched | any) => void
+  handler: (matched: MatchmakerMatched) => void
 ): () => void {
+  const mmSocket = socket as MatchmakingSocket;
+
   // assign handler (overwrites previous handler) — prevents duplicate listeners
-  socket.onmatchmakermatched = handler;
+  mmSocket.onmatchmakermatched = handler;
 
   // return unsubscribe function
   return () => {
     try {
-      // only clear if it's still the same handler we set (safe guard)
-      if ((socket as any).onmatchmakermatched === handler) {
-        (socket as any).onmatchmakermatched = undefined;
+      // only clear if it's still the same handler we set (safeguard)
+      if (mmSocket.onmatchmakermatched === handler) {
+        mmSocket.onmatchmakermatched = () => {};
       }
     } catch {
       // ignore
@@ -132,10 +138,10 @@ export function subscribeMatchmakerMatched(
 
 export async function subscribeMatchmakerMatchedWithSession(
   session: Session,
-  handler: (matched: MatchmakerMatched | any) => void,
+  handler: (matched: MatchmakerMatched) => void,
   appearOnline = true
 ): Promise<() => void> {
-  const socket = await getSocket(session, appearOnline);
+  const socket = (await getSocket(session, appearOnline)) as MatchmakingSocket;
 
   // reuse the assignment approach to avoid adding duplicate listeners
   socket.onmatchmakermatched = handler;
@@ -143,11 +149,11 @@ export async function subscribeMatchmakerMatchedWithSession(
   // return unsubscribe function
   return () => {
     try {
-      if ((socket as any).onmatchmakermatched === handler) {
-        (socket as any).onmatchmakermatched = undefined;
+      if (socket.onmatchmakermatched === handler) {
+        socket.onmatchmakermatched = () => {};
       }
     } catch {
-      /* ignore */
+      // ignore
     }
   };
 }
