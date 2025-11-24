@@ -1,7 +1,7 @@
 // lib/nakamaSocket.ts
 import { Client, Session, Socket, WebSocketAdapterText, MatchmakerMatched } from "@heroiclabs/nakama-js";
 
-/** REST client singleton */
+/** runtime config derived from env */
 const useSSL = (process.env.NEXT_PUBLIC_NAKAMA_SSL === 'true');
 const port = Number(
   process.env.NEXT_PUBLIC_NAKAMA_PORT ??
@@ -11,7 +11,7 @@ const port = Number(
 export const client = new Client(
   process.env.NEXT_PUBLIC_NAKAMA_SERVER_KEY ?? "defaultkey",
   process.env.NEXT_PUBLIC_NAKAMA_HOST ?? "127.0.0.1",
-  String(port),
+  String(port),       // number is clearer
   useSSL,
   10000
 );
@@ -30,6 +30,10 @@ export function isConnected(): boolean {
  * If a connection is already in-flight, reuses the same promise.
  */
 export async function getSocket(session: Session, appearOnline = true): Promise<Socket> {
+  if (!session || !session.token) {
+    throw new Error("Invalid Nakama session passed to getSocket");
+  }
+
   // reuse if already connected
   if (socketInstance && connected) return socketInstance;
 
@@ -39,12 +43,13 @@ export async function getSocket(session: Session, appearOnline = true): Promise<
   // otherwise create/connect and store promise
   connectingPromise = (async () => {
     // if socket already created but not connected, reuse it; else create new one
-    const sock = socketInstance ?? client.createSocket(); // you can pass WebSocketAdapterText if needed
+    // IMPORTANT: pass useSSL so the socket uses wss:// in production
+    const adapter = new WebSocketAdapterText(); // optional, keeps text encoding
+    const sock = socketInstance ?? client.createSocket(useSSL, true, adapter);
 
-    // Attach handlers only once (assignment overwrites duplicates)
+    // Attach handlers - ensure ondisconnect clears state
     sock.ondisconnect = () => {
       connected = false;
-      // clear so next call will create a fresh socket
       socketInstance = null;
       connectingPromise = null;
     };
@@ -52,12 +57,22 @@ export async function getSocket(session: Session, appearOnline = true): Promise<
     // keep reference to prevent parallel creations
     socketInstance = sock;
 
-    // ALWAYS call connect(), appearOnline just affects presence visibility
-    await sock.connect(session, appearOnline);
-
-    connected = true;
-    connectingPromise = null;
-    return sock;
+    try {
+      // ALWAYS call connect(), appearOnline just affects presence visibility
+      await sock.connect(session, appearOnline);
+      connected = true;
+      return sock;
+    } catch (err) {
+      // clear stale state so next call can retry
+      socketInstance = null;
+      connectingPromise = null;
+      connected = false;
+      // rethrow so callers know it failed
+      throw err;
+    } finally {
+      // ensure connectingPromise is cleared on success too
+      if (connected) connectingPromise = null;
+    }
   })();
 
   return connectingPromise;
@@ -69,7 +84,8 @@ export async function getSocket(session: Session, appearOnline = true): Promise<
  */
 export function createSocketOnly(): Socket {
   if (!socketInstance) {
-    socketInstance = client.createSocket();
+    const adapter = new WebSocketAdapterText();
+    socketInstance = client.createSocket(useSSL, true, adapter);
   }
   return socketInstance;
 }
@@ -91,7 +107,7 @@ export function currentSocket(): Socket | null {
 
 /**
  * addToMatchmaker - ensures socket is connected and joins matchmaker queue.
- * 
+ *
  * @param session       Nakama Session
  * @param query         Matchmaker query expression
  * @param minCount      Minimum number of players required
@@ -103,16 +119,8 @@ export async function addToMatchmaker(
   minCount: number = 2,
   maxCount: number = 2,
 ) {
-  // Ensure socket is created + connected
   const socket: Socket = await getSocket(session);
-
-  // Join the Nakama matchmaker queue
-  const ticket = await socket.addMatchmaker(
-    query,
-    minCount,
-    maxCount,
-  );
-
+  const ticket = await socket.addMatchmaker(query, minCount, maxCount);
   return ticket; // { ticket: string }
 }
 
@@ -125,14 +133,9 @@ export function subscribeMatchmakerMatched(
   handler: (matched: MatchmakerMatched) => void
 ): () => void {
   const mmSocket = socket as MatchmakingSocket;
-
-  // assign handler (overwrites previous handler) — prevents duplicate listeners
   mmSocket.onmatchmakermatched = handler;
-
-  // return unsubscribe function
   return () => {
     try {
-      // only clear if it's still the same handler we set (safeguard)
       if (mmSocket.onmatchmakermatched === handler) {
         mmSocket.onmatchmakermatched = () => {};
       }
@@ -148,11 +151,7 @@ export async function subscribeMatchmakerMatchedWithSession(
   appearOnline = true
 ): Promise<() => void> {
   const socket = (await getSocket(session, appearOnline)) as MatchmakingSocket;
-
-  // reuse the assignment approach to avoid adding duplicate listeners
   socket.onmatchmakermatched = handler;
-
-  // return unsubscribe function
   return () => {
     try {
       if (socket.onmatchmakermatched === handler) {
