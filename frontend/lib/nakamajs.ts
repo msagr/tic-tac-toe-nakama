@@ -2,11 +2,13 @@
 import { Client, Session, Socket, WebSocketAdapterText, MatchmakerMatched } from "@heroiclabs/nakama-js";
 
 /** REST client singleton */
+const useSSL = (process.env.NEXT_PUBLIC_NAKAMA_SSL === 'true');
+
 export const client = new Client(
   process.env.NEXT_PUBLIC_NAKAMA_SERVER_KEY ?? "defaultkey",
   process.env.NEXT_PUBLIC_NAKAMA_HOST ?? "127.0.0.1",
   "7350",
-  false,
+  useSSL,
   10000
 );
 
