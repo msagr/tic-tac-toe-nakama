@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import React, { useEffect, useState, useRef } from "react";
 import { useUser } from "@/lib/hook/UserContext";
 import type { BoardState } from "@/types/tic";
@@ -145,7 +147,11 @@ export default function MultiplayerGamePage() {
   const isOpponentTurn = opponentSymbol !== null && currentTurn === opponentSymbol;
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+        const next = `/create-room`;
+        router.push(`/register?next=${encodeURIComponent(next)}`);
+        return;
+    }
 
     let cancelled = false;
 

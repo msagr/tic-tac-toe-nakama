@@ -59,6 +59,7 @@ export default function WaitingPage() {
   useEffect(() => {
     if (!user) {
       console.log("You must be logged in to use matchmaking.");
+      router.push(`/register`);
       return;
     }
 

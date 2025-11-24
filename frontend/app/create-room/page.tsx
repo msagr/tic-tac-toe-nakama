@@ -13,12 +13,15 @@ export default function CreateRoomPage() {
   const [roomDescription, setRoomDescription] = useState<string>("");
   const { user } = useUser();
   const router = useRouter();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
   event.preventDefault();
 
   if (!user) {
     console.log("You must be logged in to create a room.");
+    const next = `/create-room`;
+    router.push(`/register?next=${encodeURIComponent(next)}`);
     return;
   }
 
