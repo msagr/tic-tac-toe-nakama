@@ -169,10 +169,20 @@ const matchLoop = function (ctx: nkruntime.Context, logger: nkruntime.Logger, nk
       if (state.winner) continue;           // game already over
       if (state.board[index] !== null) continue;
 
-      // Map player to symbol (X/O) via userId; fallback to currentTurn if not assigned.
+      // Enforce server-side turn order and symbol mapping.
       const userId = msg.sender.userId;
       const symbols = (state as any).symbols as { [userId: string]: "X" | "O" };
-      const symbol = symbols && symbols[userId] ? symbols[userId] : state.currentTurn;
+      if (!symbols || !symbols[userId]) {
+        // Player has no assigned symbol yet; ignore move.
+        continue;
+      }
+
+      const symbol = symbols[userId];
+      if (symbol !== (state as any).currentTurn) {
+        // Not this player's turn; ignore move.
+        continue;
+      }
+
       state.board[index] = symbol;
 
       // Check winner & switch turn

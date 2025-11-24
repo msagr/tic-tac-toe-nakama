@@ -32,6 +32,9 @@ export default function MultiplayerGamePage() {
   const [selfSymbol, setSelfSymbol] = useState<"X" | "O" | null>(null);
   const [opponentSymbol, setOpponentSymbol] = useState<"X" | "O" | null>(null);
 
+  const isMyTurn = selfSymbol !== null && currentTurn === selfSymbol;
+  const isOpponentTurn = opponentSymbol !== null && currentTurn === opponentSymbol;
+
   useEffect(() => {
     if (!user || !matchId) return;
 
@@ -165,6 +168,7 @@ export default function MultiplayerGamePage() {
               label="Opponent"
               align="top"
               symbol={opponentSymbol}
+              isTurn={isOpponentTurn}
             />
           </div>
 
@@ -210,6 +214,7 @@ export default function MultiplayerGamePage() {
               align="bottom"
               highlight
               symbol={selfSymbol}
+              isTurn={isMyTurn}
             />
           </div>
         </div>
@@ -225,6 +230,7 @@ type PlayerPanelProps = {
   align: "top" | "bottom";
   highlight?: boolean;
   symbol?: "X" | "O" | null;
+  isTurn?: boolean;
 };
 
 const PlayerPanel: React.FC<PlayerPanelProps> = ({
@@ -234,7 +240,8 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
   align,
   highlight = false,
   symbol,
-}) => {
+  isTurn = false,
+}: PlayerPanelProps) => {
   const isTop = align === "top";
 
   return (
@@ -247,8 +254,12 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
         borderRadius: 999,
         background:
           "linear-gradient(135deg, rgba(15,23,42,0.95), rgba(3,7,18,0.98))",
-        border: "1px solid rgba(148,163,184,0.4)",
-        boxShadow: "0 16px 40px rgba(0,0,0,0.7)",
+        border: isTurn
+          ? "2px solid rgba(250,204,21,0.9)"
+          : "1px solid rgba(148,163,184,0.4)",
+        boxShadow: isTurn
+          ? "0 18px 45px rgba(250,204,21,0.45)"
+          : "0 16px 40px rgba(0,0,0,0.7)",
         transform: isTop ? "translateY(0)" : "translateY(0)",
       }}
     >
@@ -301,6 +312,7 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({
           }}
         >
           {label}
+          {isTurn ? " • Your turn" : ""}
         </span>
       </div>
     </div>
