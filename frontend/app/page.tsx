@@ -100,17 +100,15 @@ export default function LandingPage() {
           </h1>
 
           <p className={styles.subtitle}>
-            Authenticated profiles, rich match history, and a polished board
-            experience. Powered by Next.js and Nakama, built for fast iteration.
+            Play real-time Tic‑Tac‑Toe with friends over the network, or warm up
+            against the computer. Powered by Nakama and Next.js for smooth,
+            low‑latency matches.
           </p>
 
           <div className={styles.ctaRow}>
-            <Link href="/login" className={styles.primaryCta}>
-              Login
-            </Link>
-            <Link href="/register" className={styles.secondaryCta}>
-              Register
-            </Link>
+            <div className={styles.featurePill}>✅ Online multiplayer matchmaking</div>
+            <div className={styles.featurePill}>✅ Private rooms with shareable codes</div>
+            <div className={styles.featurePill}>✅ Local vs computer practice mode</div>
           </div>
 
           <div className={styles.metaRow}>
@@ -161,15 +159,9 @@ export default function LandingPage() {
               </div>
 
               <div className={styles.previewFooter}>
-                <Link href="/tictactoe" className={styles.playCta}>
-                  Play as Guest
-                </Link>
                 <p className={styles.previewHint}>
-                  Want persistent stats?{" "}
-                  <Link href="/register" className={styles.inlineLink}>
-                    Create an account
-                  </Link>
-                  .
+                  Jump into multiplayer or practice vs computer using the options in
+                  the navigation bar above.
                 </p>
               </div>
             </div>

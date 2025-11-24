@@ -9,6 +9,8 @@
 
 interface LobbyMatchParams {
   invited?: string;
+  roomName?: string;
+  roomDescription?: string;
 }
 
 function makeEmptyBoard(): ("X" | "O" | null)[] {
@@ -36,10 +38,15 @@ const matchInit = function (ctx: nkruntime.Context, logger: nkruntime.Logger, nk
     symbols: {},
   };
 
+  const labelObj = {
+    roomName: params.roomName ?? null,
+    roomDescription: params.roomDescription ?? null,
+  };
+
   return {
     state,
     tickRate: 1,
-    label: "",
+    label: JSON.stringify(labelObj),
   };
 };
 
@@ -79,6 +86,13 @@ const matchJoin = function (ctx: nkruntime.Context, logger: nkruntime.Logger, nk
       currentTurn: (state as any).currentTurn,
       winner: (state as any).winner,
       symbols: (state as any).symbols || {},
+      usernames: Object.keys(state.presences).reduce((acc: { [userId: string]: string }, sid) => {
+        const p = (state as any).presences[sid] as nkruntime.Presence;
+        if (p && p.userId) {
+          acc[p.userId] = p.username;
+        }
+        return acc;
+      }, {}),
     });
 
     dispatcher.broadcastMessage(
@@ -144,6 +158,13 @@ const matchLoop = function (ctx: nkruntime.Context, logger: nkruntime.Logger, nk
         currentTurn: (state as any).currentTurn,
         winner: (state as any).winner,
         symbols: (state as any).symbols || {},
+        usernames: Object.keys((state as any).presences || {}).reduce((acc: { [userId: string]: string }, sid) => {
+          const p = (state as any).presences[sid] as nkruntime.Presence;
+          if (p && p.userId) {
+            acc[p.userId] = p.username;
+          }
+          return acc;
+        }, {}),
       });
 
       dispatcher.broadcastMessage(
@@ -201,6 +222,13 @@ const matchLoop = function (ctx: nkruntime.Context, logger: nkruntime.Logger, nk
         currentTurn: state.currentTurn,
         winner: state.winner,
         symbols: (state as any).symbols || {},
+        usernames: Object.keys(state.presences).reduce((acc: { [userId: string]: string }, sid) => {
+          const p = (state as any).presences[sid] as nkruntime.Presence;
+          if (p && p.userId) {
+            acc[p.userId] = p.username;
+          }
+          return acc;
+        }, {}),
       });
 
       const presences = Object.keys(state.presences).map(
@@ -279,9 +307,73 @@ function matchmakerMatched(context: nkruntime.Context, logger: nkruntime.Logger,
   }
 }
 
+function createRoomRpc(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string): string {
+ try {
+    const body = payload ? JSON.parse(payload) as { roomName?: string; roomDescription?: string } : {};
+    const params: LobbyMatchParams = {
+        roomName: body.roomName,
+        roomDescription: body.roomDescription,
+    };
+    const matchId = nk.matchCreate("lobby", params);
+    logger.info("Created room match with id %s", matchId);
+    return JSON.stringify({ matchId, roomName: body.roomName ?? null, roomDescription: body.roomDescription ?? null });
+    } catch (err) {
+    logger.error("createRoomRpc error: %v", err);
+    throw err;
+ }
+}
+
+function listRoomsRpc(ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, payload: string): string {
+  try {
+    const limit = 50;
+    const isAuthoritative = true;
+    const minSize = 1;
+    const maxSize = 1;
+
+    // label = null, query = ""  → no extra filters, just size=1 authoritative matches
+    const matches = nk.matchList(limit, isAuthoritative, null, minSize, maxSize, "");
+
+    logger.info("listRoomsRpc: found %d matches", matches.length);
+
+    const rooms = matches.map(function (m) {
+      let roomName: string | null = null;
+      let roomDescription: string | null = null;
+
+      if (m.label) {
+        try {
+          const parsed = JSON.parse(m.label) as {
+            roomName?: string | null;
+            roomDescription?: string | null;
+          };
+          roomName = parsed.roomName || null;
+          roomDescription = parsed.roomDescription || null;
+        } catch (e) {
+          logger.error("Failed to parse match label for match %s: %v", m.matchId, e);
+        }
+      }
+
+      return {
+        matchId: m.matchId,
+        roomName,
+        roomDescription,
+        size: m.size,
+        maxSize: 2, // you want a 1v1 game
+      };
+    });
+
+    logger.info("listRoomsRpc: returning %d rooms", rooms.length);
+    return JSON.stringify({ rooms });
+  } catch (err) {
+    logger.error("listRoomsRpc error: %v", err);
+    throw err;
+  }
+}
+
 let InitModule: nkruntime.InitModule = function (ctx: nkruntime.Context, logger: nkruntime.Logger, nk: nkruntime.Nakama, initializer: nkruntime.Initializer) {
   initializer.registerRtBefore("MatchmakerAdd", beforeMatchmakerAdd)
   initializer.registerMatchmakerMatched(matchmakerMatched)
+  initializer.registerRpc("create_room", createRoomRpc)
+  initializer.registerRpc("list_rooms", listRoomsRpc)
   initializer.registerMatch('lobby', {
     matchInit,
     matchJoinAttempt,

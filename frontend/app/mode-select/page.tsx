@@ -20,15 +20,7 @@ const MODES: Mode[] = [
     description: "Create or join a room, then challenge a friend in real time.",
     href: "/multiplayer", // TODO: create this page / route
     badge: "Online · Real-time",
-  },
-  {
-    id: "computer",
-    title: "Computer",
-    tagline: "Sharpen your strategy",
-    description: "Practice locally against a smart AI opponent at your own pace.",
-    href: "/tictactoe", // reuse your existing local game page
-    badge: "Offline · Single player",
-  },
+  }
 ];
 
 function ModeCard({ mode }: { mode: Mode }) {
@@ -47,7 +39,6 @@ function ModeCard({ mode }: { mode: Mode }) {
             <>
               <li className={styles.modePill}>Real-time sync</li>
               <li className={styles.modePill}>Rooms & invites</li>
-              <li className={styles.modePill}>Best of 3</li>
             </>
           ) : (
             <>

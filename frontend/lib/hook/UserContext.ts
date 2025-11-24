@@ -5,6 +5,7 @@ import {
   createContext,
   useContext,
   useState,
+  useEffect,
   type ReactNode,
   type Dispatch,
   type SetStateAction,
@@ -26,13 +27,47 @@ type UserContextValue = {
   logout: () => void;
 };
 
+const STORAGE_KEY = "nakamaSession";
+
 const UserContext = createContext<UserContextValue | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<Session | null>(null);
+  // Start with no user on both server and client so the initial HTML matches.
+  const [user, setUser] = useState<Session | null>(() => {
+  if (typeof window === "undefined") {
+    // During SSR / initial render on server
+    return null;
+  }
+
+  const stored = window.localStorage.getItem(STORAGE_KEY);
+  if (!stored) return null;
+
+  try {
+    return JSON.parse(stored) as Session;
+  } catch {
+    window.localStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
+});
+
+
+
+  // Keep localStorage in sync with the latest user state.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (user) {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+    } else {
+      window.localStorage.removeItem(STORAGE_KEY);
+    }
+  }, [user]);
 
   const logout = () => {
     setUser(null);
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(STORAGE_KEY);
+    }
     // TODO: clear Nakama session / tokens if needed
   };
 

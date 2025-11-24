@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import styles from "../app/Landing.module.css";
 import { useUser } from "@/lib/hook/UserContext";
 
@@ -13,23 +14,43 @@ type NavLink = {
 const links: NavLink[] = [
   { href: "/", label: "Home" },
   { href: "/mode-select", label: "Play" },
-  { href: "/multiplayer", label: "Multiplayer" },
-  { href: "/tictactoe", label: "Vs Computer" },
 ];
 
-function NavUserAvatar({ username }: { username: string }) {
+function NavUserAvatar({
+  username,
+  onClick,
+}: {
+  username: string;
+  onClick?: () => void;
+}) {
   const initial = username.trim().charAt(0).toUpperCase() || "?";
 
   return (
-    <div className={styles.navUserAvatar} aria-label={username} title={username}>
+    <button
+      type="button"
+      className={styles.navUserAvatar}
+      aria-label={username}
+      title={username}
+      onClick={onClick}
+    >
       <span className={styles.navUserAvatarInitial}>{initial}</span>
-    </div>
+    </button>
   );
 }
 
 export function NavBar() {
   const pathname = usePathname();
-  const { user } = useUser();
+  const { user, logout } = useUser();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  const hideOnRoutes = [
+    "/multiplayer/waiting",
+    "/multiplayer/game",
+  ];
+
+  if (hideOnRoutes.some((prefix) => pathname.startsWith(prefix))) {
+    return null;
+  }
 
   return (
     <header className={styles.navRoot}>
@@ -60,18 +81,44 @@ export function NavBar() {
         </nav>
 
         <div className={styles.navAuth}>
-           {!user ? (
+          {!user ? (
             <>
-                <Link href="/login" className={styles.navAuthLink}>
-                    Log in
-                </Link>
-                <Link href="/register" className={styles.navAuthPrimary}>
-                    Sign up
-                </Link>
+              <Link href="/login" className={styles.navAuthLink}>
+                Log in
+              </Link>
+              <Link href="/register" className={styles.navAuthPrimary}>
+                Sign up
+              </Link>
             </>
-            ) : (
-                <NavUserAvatar username={user.username as string} />
-            )}
+          ) : (
+            <div className={styles.navUserMenuWrapper}>
+              <NavUserAvatar
+                username={user.username as string}
+                onClick={() => setIsUserMenuOpen((open) => !open)}
+              />
+              {isUserMenuOpen && (
+                <div className={styles.navUserMenuDropdown}>
+                    <div className={styles.navUserMenuHeader}>
+                    <div className={styles.navUserMenuLabel}>Signed in as</div>
+                    <div className={styles.navUserMenuName}>
+                        {user.username as string}
+                    </div>
+                    </div>
+
+                    <button
+                    type="button"
+                    className={styles.navUserMenuItem}
+                    onClick={() => {
+                        setIsUserMenuOpen(false);
+                        logout();
+                    }}
+                    >
+                    Logout
+                    </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </header>
