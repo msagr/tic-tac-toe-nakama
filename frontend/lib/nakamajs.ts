@@ -2,16 +2,16 @@
 import { Client, Session, Socket, WebSocketAdapterText, MatchmakerMatched } from "@heroiclabs/nakama-js";
 
 /** runtime config derived from env */
-const useSSL = (process.env.NEXT_PUBLIC_NAKAMA_SSL === 'true');
+const useSSL = (process.env.NEXT_PUBLIC_NAKAMA_SSL === "true");
 const port = Number(
   process.env.NEXT_PUBLIC_NAKAMA_PORT ??
-  (useSSL ? 443 : 7350)
+    (useSSL ? 443 : 7350)
 );
 
 export const client = new Client(
   process.env.NEXT_PUBLIC_NAKAMA_SERVER_KEY ?? "defaultkey",
   process.env.NEXT_PUBLIC_NAKAMA_HOST ?? "127.0.0.1",
-  String(port),       // number is clearer
+  String(port),
   useSSL,
   10000
 );
@@ -42,9 +42,8 @@ export async function getSocket(session: Session, appearOnline = true): Promise<
 
   // otherwise create/connect and store promise
   connectingPromise = (async () => {
-    // if socket already created but not connected, reuse it; else create new one
-    // IMPORTANT: pass useSSL so the socket uses wss:// in production
-    const adapter = new WebSocketAdapterText(); // optional, keeps text encoding
+    // Use WebSocketAdapterText and pass useSSL so the resulting URL is wss:// when appropriate.
+    const adapter = new WebSocketAdapterText();
     const sock = socketInstance ?? client.createSocket(useSSL, true, adapter);
 
     // Attach handlers - ensure ondisconnect clears state
@@ -52,15 +51,32 @@ export async function getSocket(session: Session, appearOnline = true): Promise<
       connected = false;
       socketInstance = null;
       connectingPromise = null;
+      // small debug
+      try { console.info("[nakamaSocket] disconnected"); } catch {}
     };
 
     // keep reference to prevent parallel creations
     socketInstance = sock;
 
     try {
+      // Debug: print what we're about to do (safe info)
+      try {
+        console.info("[nakamaSocket] connecting", {
+          host: process.env.NEXT_PUBLIC_NAKAMA_HOST,
+          port,
+          useSSL,
+          appearOnline,
+          userId: (session as Session).user_id ?? "(unknown)",
+        });
+      } catch {}
+
       // ALWAYS call connect(), appearOnline just affects presence visibility
       await sock.connect(session, appearOnline);
+
       connected = true;
+      // clear connectingPromise here so future callers don't await stale promise
+      connectingPromise = null;
+      try { console.info("[nakamaSocket] connected"); } catch {}
       return sock;
     } catch (err) {
       // clear stale state so next call can retry
@@ -69,9 +85,6 @@ export async function getSocket(session: Session, appearOnline = true): Promise<
       connected = false;
       // rethrow so callers know it failed
       throw err;
-    } finally {
-      // ensure connectingPromise is cleared on success too
-      if (connected) connectingPromise = null;
     }
   })();
 
@@ -117,7 +130,7 @@ export async function addToMatchmaker(
   session: Session,
   query: string = "*",
   minCount: number = 2,
-  maxCount: number = 2,
+  maxCount: number = 2
 ) {
   const socket: Socket = await getSocket(session);
   const ticket = await socket.addMatchmaker(query, minCount, maxCount);
