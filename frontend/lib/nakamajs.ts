@@ -3,11 +3,15 @@ import { Client, Session, Socket, WebSocketAdapterText, MatchmakerMatched } from
 
 /** REST client singleton */
 const useSSL = (process.env.NEXT_PUBLIC_NAKAMA_SSL === 'true');
+const port = Number(
+  process.env.NEXT_PUBLIC_NAKAMA_PORT ??
+  (useSSL ? 443 : 7350)
+);
 
 export const client = new Client(
   process.env.NEXT_PUBLIC_NAKAMA_SERVER_KEY ?? "defaultkey",
   process.env.NEXT_PUBLIC_NAKAMA_HOST ?? "127.0.0.1",
-  "7350",
+  String(port),
   useSSL,
   10000
 );
