@@ -4,7 +4,7 @@ import { Client, Session, Socket, WebSocketAdapterText, MatchmakerMatched } from
 /** REST client singleton */
 export const client = new Client(
   process.env.NEXT_PUBLIC_NAKAMA_SERVER_KEY ?? "defaultkey",
-  "127.0.0.1",
+  process.env.NEXT_PUBLIC_NAKAMA_HOST ?? "127.0.0.1",
   "7350",
   false,
   10000
